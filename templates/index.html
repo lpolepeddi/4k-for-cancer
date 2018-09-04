@@ -1,0 +1,239 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="left">
+  <div class="main">
+    <section id="usa">
+      <div class="container">
+        <h1>4K for Cancer</h1>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      </div>
+    </section>
+
+    {% for destination in destinations %}
+    <section id="{{ destination['slug'] }}">
+      <div class="container">
+        <h3>{{ destination['location']['name'] }}</h3>
+
+        {% if destination['photos'] | length > 1 %}
+
+          {% if 'full' in destination['photos'][0] %}
+            
+            {% if 'mp4' in destination['photos'][0]['filepath'] %}
+            <div class="embed-responsive embed-responsive-16by9">
+              <video controls>
+                <source src="{{ destination['photos'][0]['filepath'] }}" type="video/mp4">
+              </video>
+            </div>
+            {% else %}
+            <img class="img-fluid" src="{{ destination['photos'][0]['filepath'] }}">
+            {% endif %}
+          
+            <div class="card-columns">
+              {% for photo in destination['photos'] %}
+                {% if loop.index > 0 %}
+                <div class="card">
+                  <img class="img-fluid" src="{{ photo['filepath'] }}">
+                </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+        
+          {% else %}
+            <div class="card-columns">
+              {% for photo in destination['photos'] %}
+              <div class="card">
+                <img class="img-fluid" src="{{ photo['filepath'] }}">
+              </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+        {% else %}
+          {% if 'mp4' in destination['photos'][0]['filepath'] %}
+          <div class="embed-responsive embed-responsive-16by9">
+            <video controls>
+              <source src="{{ destination['photos'][0]['filepath'] }}" type="video/mp4">
+            </video>
+          </div>
+          {% else %}
+          <img class="img-fluid" src="{{ destination['photos'][0]['filepath'] }}">
+          {% endif %}
+        {% endif %}
+
+        <p>{{ destination['photos'][0]['caption'] }}</p>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+
+<div id="map"></div>
+
+<div class="modal" id="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        <img id="modalImage" class="img-fluid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoibHBvbGVwZWRkaSIsImEiOiJjamxsNjQzcmQwdTVoM3JzMW1iaGxxNjNoIn0.NHGJsP3-H9Yc4gGl7c1COw';
+
+let map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/light-v9',
+
+  center: [-98.678503, 39.999733],
+  zoom: 3,
+});
+
+map.on('load', function () {
+  map.addLayer({
+    "id": "route",
+    "type": "line",
+    "source": {
+      "type": "geojson",
+      "data": {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+          "type": "LineString",
+            "coordinates": [
+              {% for destination in destinations %}
+                {{ destination['location']['coordinates'] }},
+              {% endfor %}
+            ]
+          }
+        }
+      },
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#183f8a",
+        "line-width": 5
+      }
+    });
+});
+
+let chapters = {
+  'usa': {
+    bearing: 0,
+    center: [-98.678503, 39.999733],
+    zoom: 3,
+    pitch: 0,
+  },
+
+  {% for destination in destinations %}
+  '{{ destination['slug'] }}': {
+    bearing: 0,
+    center: {{ destination['location']['coordinates'] }},
+    zoom: 8,
+    pitch: 0,
+    curve: {{ destination['curve'] }},
+    speed: {{ destination['speed'] }},
+  },
+  {% endfor %}
+};
+
+function addMarker(coordinates) {
+  let lng = coordinates[0];
+  let lat = coordinates[1];
+
+  map.addSource('currentLocation', {
+    "type": "geojson",
+    "data": {
+      "type": "FeatureCollection",
+      "features": [{
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [lng, lat],
+        },
+        "properties": {
+          "marker-color": "#ff0000"
+        }
+      }]
+    }
+  });
+
+  map.addLayer({
+    "id": "marker",
+    "type": "circle",
+    "source": "currentLocation",
+    "paint": {
+      "circle-radius": 9,
+      "circle-color": "#fdd900"
+    }
+  });
+}
+
+function removeMarker() {
+
+  if (map.getLayer('marker')) {
+    map.removeLayer('marker');
+    map.removeSource('currentLocation');
+  }
+}
+
+function isElementOnScreen(id) {
+  let element = document.getElementById(id);
+  let bounds = element.getBoundingClientRect();
+  // return bounds.top < window.innerHeight && bounds.bottom > 0;
+  return bounds.bottom - 130 > 0;
+}
+
+let activeChapterName = 'usa';
+function setActiveChapter(chapterName) {
+  if (chapterName === activeChapterName) {
+    return;
+  }
+
+  removeMarker();
+  if (chapterName !== 'usa') {
+    addMarker(chapters[chapterName].center);  
+  }
+
+  map.flyTo(chapters[chapterName]);
+
+  document.getElementById(chapterName).setAttribute('class', 'active');
+  document.getElementById(activeChapterName).setAttribute('class', '');
+  activeChapterName = chapterName;
+}
+
+window.onscroll = function() {
+  let chapterNames = Object.keys(chapters);
+  for (let i = 0; i < chapterNames.length; i++) {
+    let chapterName = chapterNames[i];
+
+    if (isElementOnScreen(chapterName)) {
+      setActiveChapter(chapterName);
+      break;
+    }
+  }
+};
+</script>
+
+<script>
+  var main = function() {
+    $('img').click(function() {
+      let src = $(this).attr('src');
+      $('#modalImage').attr('src', src);
+      $('#modal').modal();
+        // <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal">Launch demo modal</button>
+
+    })
+  }
+
+  $(document).ready(main);
+</script>
+{% endblock %}

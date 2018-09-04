@@ -1,0 +1,100 @@
+/*General*/
+html, body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+}
+
+/*Layout*/
+.left {
+  width: 50%;
+  overflow-y: scroll;
+  background-color: #fff;
+}
+
+.container {
+  padding: 0 50px;
+}
+
+#map {
+  position: fixed;
+  margin-left: 50%;
+  width: 50%;
+  top: 0;
+  bottom: 0;
+}
+
+/*Section*/
+section {
+  padding: 100px 0;
+}
+
+section h1 {
+  color: #212121;
+  font-family: 'Roboto', sans-serif;
+  font-size: 2.827em;
+  font-weight: 300;
+  margin: 0;
+}
+
+section h3 {
+  color: #212121;
+  font-family: 'Roboto', sans-serif;  
+  font-size: 1.414em;
+  font-weight: 400;
+  margin: 0;
+}
+
+section img, 
+section .card-columns,
+section .embed-responsive {
+  padding: 30px 0;
+}
+
+section img {
+  cursor: pointer;
+}
+
+section p {
+  color: #757575;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1em;
+  font-weight: 300;
+  line-height: 27px;
+  margin: 0;
+  padding: 30px 0 0 0;
+}
+
+section img + p,
+section img + .card-columns,
+section .card-columns + p {
+  padding-top: 0;
+}
+
+section + section {
+  border-top: 1px solid #eee;
+}
+
+section .card-columns {
+  -webkit-column-count: 2;
+  -moz-column-count: 2;
+  column-count: 2;
+}
+
+.card {
+  border: none;
+}
+
+.card img {
+  padding: 0;
+}
+
+.modal-body {
+  padding: 0;
+  border-radius: 0;
+  margin: 0 auto;
+}
+
+.modal-content {
+  background-color: #000;
+}
